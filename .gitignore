@@ -1,0 +1,26 @@
+# 환경 변수 및 민감한 정보
+.env
+
+# Python 가상 환경 (venv, virtualenv)
+venv/
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+.Python
+
+# IDE 설정 파일
+.vscode/
+.idea/
+*.swp
+
+# 로그 파일 및 캐시
+logs/
+*.log
+.DS_Store
+
+# Jupyter Notebook Checkpoints
+.ipynb_checkpoints/
+
+# Notion API 응답 JSON 캐시 (필요하면 추가)
+notion_data.json
