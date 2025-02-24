@@ -39,7 +39,11 @@ def get_attendees_by_day():
 
     for item in notion_data.get("results", []):
         properties = item.get("properties", {})
+        
+        # '진행일' 데이터가 없을 경우 None을 피할 수 있도록 처리
         date_info = properties.get("진행일", {}).get("date", {}).get("start", None)
+        
+        # '참여자' 데이터가 없을 경우 빈 리스트를 반환하도록 처리
         attendees = properties.get("참여자", {}).get("multi_select", [])
 
         if date_info:
@@ -47,7 +51,7 @@ def get_attendees_by_day():
 
         # ✅ 필터링 전에 모든 데이터를 출력하는 것이 아니라, "오늘 날짜"만 출력하도록 변경!
         if date_info == today:
-            attendees_list = [attendee["name"] for attendee in attendees]
+            attendees_list = [attendee["name"] for attendee in attendees] if attendees else []
             today_attendees[date_info] = attendees_list
             print(f"✅ 과제 여부 - 진행일: {date_info}, 출석자: {attendees_list}")  # ✅ 오늘 날짜만 출력
 
