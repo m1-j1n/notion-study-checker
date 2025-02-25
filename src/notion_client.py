@@ -25,70 +25,60 @@ def fetch_notion_data():
     else:
         print(f"❌ Notion API 오류: {response.status_code}, {response.text}")
         return None
-
+    
 def get_attendees_by_day():
     """오늘 날짜(YYYY-MM-DD)의 출석자 정보 가져오기"""
     notion_data = fetch_notion_data()
     if not notion_data:
         return {}
 
-    today = datetime.today().strftime("%Y-%m-%d")  # 오늘 날짜 (예: '2025-02-19')
+    # 전체 데이터를 출력해서 확인
+    print("🔍 Notion 원본 데이터 (처음 1개만 출력):")
+    print(json.dumps(notion_data.get("results", [])[0], indent=4, ensure_ascii=False))
+
+    today = datetime.today().strftime("%Y-%m-%d")  # 예: '2025-02-25'
     today_attendees = {}
 
-    print(f"✅ 오늘 날짜: {today}")  # 🔍 오늘 날짜 출력
+    print(f"✅ 오늘 날짜: {today}")
 
-    for item in notion_data.get("results", []):
+    for index, item in enumerate(notion_data.get("results", [])):
         properties = item.get("properties", {})
-        
-        # '진행일' 데이터가 없을 경우 None을 피할 수 있도록 처리
-        date_info = properties.get("진행일", {}).get("date", {}).get("start", None)
-        
-        # '참여자' 데이터가 없을 경우 빈 리스트를 반환하도록 처리
-        attendees = properties.get("참여자", {}).get("multi_select", [])
+
+        # 🚀 각 루프에서 현재 properties 상태 출력
+        print(f"🔍 [{index}] 현재 properties 상태:")
+        print(json.dumps(properties, indent=4, ensure_ascii=False))
+
+        # 진행일 정보 가져오기
+        date_info = None
+        progress_prop = properties.get("진행일", {})
+
+        if progress_prop is None:
+            print(f"⚠️ [{index}] 진행일 프로퍼티 없음, None 처리됨")
+        elif not isinstance(progress_prop, dict):
+            print(f"⚠️ [{index}] 진행일 프로퍼티가 예상한 dict 타입이 아님: {progress_prop}")
+        elif "date" not in progress_prop:
+            print(f"⚠️ [{index}] 'date' 키 없음")
+        elif progress_prop["date"] is None:
+            print(f"⚠️ [{index}] 'date' 값이 None")
+        else:
+            date_info = progress_prop["date"].get("start")
 
         if date_info:
-            date_info = date_info[:10]  # ✅ 'YYYY-MM-DD' 형식으로 변환
+            date_info = date_info[:10]  # 'YYYY-MM-DD' 형식 변환
+        else:
+            print(f"⚠️ [{index}] 진행일 정보가 없음, 건너뜀")
+            continue
 
-        # ✅ 필터링 전에 모든 데이터를 출력하는 것이 아니라, "오늘 날짜"만 출력하도록 변경!
+        # 참여자 정보 가져오기
+        attendees = properties.get("참여자", {}).get("multi_select", [])
+
+        # 오늘 날짜와 일치하는 경우만 처리
         if date_info == today:
-            attendees_list = [attendee["name"] for attendee in attendees] if attendees else []
+            attendees_list = [attendee["name"] for attendee in attendees]
             today_attendees[date_info] = attendees_list
-            print(f"✅ 과제 여부 - 진행일: {date_info}, 출석자: {attendees_list}")  # ✅ 오늘 날짜만 출력
+            print(f"✅ [{index}] 과제 여부 - 진행일: {date_info}, 출석자: {attendees_list}")
 
     return today_attendees
-
-def create_study_page():
-    """매주 월요일, 수요일 스터디 페이지 자동 생성"""
-    today = datetime.today().strftime("%Y-%m-%d")
-    day = datetime.today().strftime("%a")  # 'Mon' or 'Wed'
-    korean_day_map = {"Mon": "월", "Wed": "수"}
-
-    if day not in korean_day_map:
-        return
-
-    title = f"{korean_day_map[day]} : 스터디"
-
-    url = "https://api.notion.com/v1/pages"
-    headers = {
-        "Authorization": f"Bearer {NOTION_API_KEY}",
-        "Content-Type": "application/json",
-        "Notion-Version": "2022-06-28"
-    }
-
-    data = {
-        "parent": {"database_id": NOTION_DATABASE_ID},
-        "properties": {
-            "과목": {"title": [{"text": {"content": title}}]},
-            "진행일": {"date": {"start": today}},
-            "참여자": {"multi_select": []}
-        }
-    }
-
-    response = requests.post(url, headers=headers, data=json.dumps(data))
-    if response.status_code == 200:
-        print(f"✅ {title} 페이지 생성 완료")
-    else:
-        print(f"❌ 페이지 생성 실패: {response.status_code}, {response.text}")
 
 # ✅ 직접 실행 시 테스트 코드
 if __name__ == "__main__":
