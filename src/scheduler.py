@@ -3,7 +3,7 @@ from mattermost_client import send_mattermost_message
 import schedule
 import time
 
-EXPECTED_ATTENDEES = {"김미진", "박소현", "양재원", "정준웅", "조영우", "곽서현", "박민수", "이한민", "신범수"}
+EXPECTED_ATTENDEES = {"김미진", "박소현", "조영우", "곽서현", "박민수", "신범수"}
 
 def check_and_notify():
     """ 출석 체크 후 미참여자 알림 전송 """
