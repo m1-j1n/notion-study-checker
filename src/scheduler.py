@@ -26,8 +26,7 @@ def check_and_notify():
             send_mattermost_message(message)  # Mattermost 알림 전송
 
 # ✅ 09:00에 출석 체크 후 알림 전송
-schedule.every().monday.at("09:00").do(check_and_notify)
-schedule.every().wednesday.at("09:00").do(check_and_notify)
+schedule.every().wednesday.at("08:30").do(check_and_notify)
 
 if __name__ == "__main__":
     check_and_notify()  # ✅ 한 번만 실행 후 종료
