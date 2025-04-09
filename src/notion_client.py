@@ -3,6 +3,7 @@ import requests
 import json
 from dotenv import load_dotenv
 from datetime import datetime
+import pytz
 
 load_dotenv()
 
@@ -36,7 +37,9 @@ def get_attendees_by_day():
     print("🔍 Notion 원본 데이터 (처음 1개만 출력):")
     print(json.dumps(notion_data.get("results", [])[0], indent=4, ensure_ascii=False))
 
-    today = datetime.today().strftime("%Y-%m-%d")  # 예: '2025-02-25'
+    kst = pytz.timezone("Asia/Seoul")
+    today = datetime.now(kst).strftime("%Y-%m-%d")  # 예: '2025-04-09'
+
     today_attendees = {}
 
     print(f"✅ 오늘 날짜: {today}")
