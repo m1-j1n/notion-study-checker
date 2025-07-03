@@ -27,64 +27,30 @@ def fetch_notion_data():
         print(f"❌ Notion API 오류: {response.status_code}, {response.text}")
         return None
     
-def get_attendees_by_day():
-    """오늘 날짜(YYYY-MM-DD)의 출석자 정보 가져오기"""
+def get_missing_attendees_by_day():
+    """오늘 날짜(YYYY-MM-DD)의 미참여자 정보 가져오기"""
     notion_data = fetch_notion_data()
     if not notion_data:
-        return {}
-
-    # 전체 데이터를 출력해서 확인
-    print("🔍 Notion 원본 데이터 (처음 1개만 출력):")
-    print(json.dumps(notion_data.get("results", [])[0], indent=4, ensure_ascii=False))
+        return None
 
     kst = pytz.timezone("Asia/Seoul")
-    today = datetime.now(kst).strftime("%Y-%m-%d")  # 예: '2025-04-09'
-
-    today_attendees = {}
-
-    print(f"✅ 오늘 날짜: {today}")
-
-    for index, item in enumerate(notion_data.get("results", [])):
+    today = datetime.now(kst).strftime("%Y-%m-%d")
+    
+    for item in notion_data.get("results", []):
         properties = item.get("properties", {})
+        date_info = properties.get("진행일", {}).get("date", {}).get("start", "")
 
-        # 🚀 각 루프에서 현재 properties 상태 출력
-        print(f"🔍 [{index}] 현재 properties 상태:")
-        print(json.dumps(properties, indent=4, ensure_ascii=False))
+        if date_info[:10] == today:
+            missing_attendees_prop = properties.get("미참여자", {}).get("multi_select", [])
+            missing_attendees = [person["name"] for person in missing_attendees_prop]
+            return date_info[:10], missing_attendees
 
-        # 진행일 정보 가져오기
-        date_info = None
-        progress_prop = properties.get("진행일", {})
-
-        if progress_prop is None:
-            print(f"⚠️ [{index}] 진행일 프로퍼티 없음, None 처리됨")
-        elif not isinstance(progress_prop, dict):
-            print(f"⚠️ [{index}] 진행일 프로퍼티가 예상한 dict 타입이 아님: {progress_prop}")
-        elif "date" not in progress_prop:
-            print(f"⚠️ [{index}] 'date' 키 없음")
-        elif progress_prop["date"] is None:
-            print(f"⚠️ [{index}] 'date' 값이 None")
-        else:
-            date_info = progress_prop["date"].get("start")
-
-        if date_info:
-            date_info = date_info[:10]  # 'YYYY-MM-DD' 형식 변환
-        else:
-            print(f"⚠️ [{index}] 진행일 정보가 없음, 건너뜀")
-            continue
-
-        # 참여자 정보 가져오기
-        attendees = properties.get("참여자", {}).get("multi_select", [])
-
-        # 오늘 날짜와 일치하는 경우만 처리
-        if date_info == today:
-            attendees_list = [attendee["name"] for attendee in attendees]
-            today_attendees[date_info] = attendees_list
-            print(f"✅ [{index}] 과제 여부 - 진행일: {date_info}, 출석자: {attendees_list}")
-
-    return today_attendees
+    return None, []
 
 # ✅ 직접 실행 시 테스트 코드
 if __name__ == "__main__":
-    attendees = get_attendees_by_day()
-    print("🔍 현재 요일의 출석 데이터:")
-    print(json.dumps(attendees, indent=4, ensure_ascii=False))
+    date, missing_attendees = get_missing_attendees_by_day()
+    if date:
+        print(f"🔍 {date}의 미참여자 데이터: {missing_attendees}")
+    else:
+        print("금일 날짜에 해당하는 데이터가 없습니다.")
